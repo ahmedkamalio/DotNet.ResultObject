@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6F8AC3C4-5CD4-4C9C-8BDC-2D3E874C7467}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResultObject", "src\ResultObject\ResultObject.csproj", "{FF087A9B-1D0D-42D0-9529-CF88E457778E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{82C24522-A5C1-4FF2-BD74-3335E06E46D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResultObject.Tests", "test\ResultObject.Tests\ResultObject.Tests.csproj", "{BAB799DF-CB4B-484E-B327-B3C38000615D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{4F9DD31E-2186-41E2-85AB-1637B9B4C863}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FF087A9B-1D0D-42D0-9529-CF88E457778E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF087A9B-1D0D-42D0-9529-CF88E457778E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF087A9B-1D0D-42D0-9529-CF88E457778E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF087A9B-1D0D-42D0-9529-CF88E457778E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAB799DF-CB4B-484E-B327-B3C38000615D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAB799DF-CB4B-484E-B327-B3C38000615D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAB799DF-CB4B-484E-B327-B3C38000615D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAB799DF-CB4B-484E-B327-B3C38000615D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FF087A9B-1D0D-42D0-9529-CF88E457778E} = {6F8AC3C4-5CD4-4C9C-8BDC-2D3E874C7467}
+		{BAB799DF-CB4B-484E-B327-B3C38000615D} = {82C24522-A5C1-4FF2-BD74-3335E06E46D7}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <PackageId>ResultObject</PackageId>
+        <Version>1.0.0</Version>
+        <Authors>Ahmed Kamal</Authors>
+        <Description>A simple result object for DotNet.</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/ahmedkamalio/DotNet.ResultObject</RepositoryUrl>
+    </PropertyGroup>
+
+</Project>
