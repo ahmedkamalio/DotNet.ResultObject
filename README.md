@@ -14,6 +14,7 @@ clear distinction between success and failure scenarios.
 - **Error Handling**: Encapsulate detailed error information on failure.
 - **Type-Safe Failures**: Transform failure results into a different value type while preserving error information.
 - **Implicit Operators**: Simplify result handling with implicit conversions between results and values.
+- **Strict Value Enforcement**: Use `MustGetValue()` to enforce non-null results in critical operations.
 
 ## Installation
 
@@ -61,11 +62,32 @@ if (failureResult.IsFailure)
 
 ### Implicit Conversions
 
-The `Result<T>` class supports implicit conversions between results and values for convenience.
+The `Result<T>` class supports implicit conversions between results and values for convenience. The implicit conversion
+returns the value if the result is successful, or `default(T)` if the result is a failure or the value is `null`.
 
 ```csharp
 int myValue = Result.Success(100);  // Implicit conversion from result to value.
 Result<int> result = 200;  // Implicit conversion from value to result.
+```
+
+If you need stricter control over `null` values, you can use the `MustGetValue()` method.
+
+### Enforcing Non-Null Results
+
+In critical scenarios where you need to ensure that the result is non-null, you can use the `MustGetValue()` method.
+This method throws an `InvalidOperationException` if the result is unsuccessful or the value is `null`.
+
+```csharp
+try
+{
+    var result = FunctionThatReturnsResult();
+    int value = result.MustGetValue();  // Throws if result is failure or value is null.
+    Console.WriteLine("Value: " + value);
+}
+catch (InvalidOperationException ex)
+{
+    Console.WriteLine("Error: " + ex.Message);
+}
 ```
 
 ### Handling Errors
@@ -92,15 +114,17 @@ Represents the result of an operation with the following properties:
 
 - `ToFailureResult<TValue>()`: Converts a failure result to a result with a different value type while preserving error
   details.
+- `MustGetValue()`: Throws an `InvalidOperationException` if the result is a failure or the value is `null`.
 
 ### `Result`
 
 Helper class to create `Result<T>` instances:
 
-- `Success()`: Creates an empty success result, this can be used to represent a successful operation that doesn't return a value.
+- `Success()`: Creates an empty success result, this can be used to represent a successful operation that doesn't return
+  a value.
 - `Success<T>(T value)`: Creates a success result with value.
 - `Failure<T>(ResultError error)`: Creates a failure result with error details.
-- `Failure<T>(string code, string reason, string message)`: Shorthand to creates a failure result with error details.
+- `Failure<T>(string code, string reason, string message)`: Shorthand to create a failure result with error details.
 
 ### `ResultError`
 
