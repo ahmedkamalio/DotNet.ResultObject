@@ -1,6 +1,6 @@
 # ResultObject
 
-<img src="https://github.com/ahmedkamalio/DotNet.ResultObject/blob/main/assets/icon.png" alt="ResultObject Icon" width="100" height="100">
+<img src="https://raw.githubusercontent.com/ahmedkamalio/DotNet.ResultObject/main/icon.png" alt="ResultObject Icon" width="100" height="100">
 
 ## Overview
 

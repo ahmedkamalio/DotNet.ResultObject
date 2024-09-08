@@ -15,7 +15,6 @@
         <PackageProjectUrl>https://github.com/ahmedkamalio/DotNet.ResultObject</PackageProjectUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>Utility, Result, ErrorHandling, DotNet</PackageTags>
-        <PackageIconUrl>https://raw.githubusercontent.com/ahmedkamalio/DotNet.ResultObject/main/icon.png</PackageIconUrl>
 
         <!-- Optional NuGet Metadata -->
         <RepositoryType>git</RepositoryType>
@@ -23,10 +22,29 @@
         <PackageIcon>icon.png</PackageIcon>
         <Copyright>Copyright © 2024 Ahmed Kamal</Copyright>
 
-        <!-- Build and Packaging Settings -->
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <!-- Enable Source Link for GitHub -->
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+
+        <!-- Enable deterministic builds to make sure the build is reproducible -->
+        <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+        <Deterministic>true</Deterministic>
+
+        <!-- Embed the sources into the PDB files for better debugging experience -->
+        <EmbedAllSources>true</EmbedAllSources>
+
+        <!-- Include symbols and configure symbol package format -->
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+        <!-- Optional: Debugging configuration -->
+        <DebugType>portable</DebugType>
+
+        <!-- Build and Packaging Settings -->
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <EnablePackageValidation>true</EnablePackageValidation>
+
+        <!-- Enable XML documentation generation -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
