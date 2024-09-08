@@ -53,6 +53,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages
+          path: src/ResultObject/bin/Release
 
       - name: Install Meziantou NuGet Package Validation Tool
         run: dotnet tool install --global Meziantou.Framework.NuGetPackageValidation.Tool
@@ -77,6 +78,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages
+          path: src/ResultObject/bin/Release
 
       - name: Publish to NuGet
         run: dotnet nuget push src/ResultObject/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
