@@ -1,5 +1,7 @@
 # ResultObject
 
+<img src="https://github.com/ahmedkamalio/DotNet.ResultObject/blob/main/assets/icon.png" alt="ResultObject Icon" width="100" height="100">
+
 ## Overview
 
 The **ResultObject** package provides a utility to return errors instead of throwing exceptions, making it a generic and
