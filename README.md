@@ -14,13 +14,14 @@ clear distinction between success and failure scenarios.
 - **Success/Failure Handling**: Easily handle success or failure outcomes of operations.
 - **Generic Result Type**: Support for results containing any type of value.
 - **Error Handling**: Encapsulate detailed error information on failure.
-- **Type-Safe Failures**: Transform failure results into a different value type while preserving error information.
-- **Implicit Operators**: Simplify result handling with implicit conversions between results and values.
-- **Strict Value Enforcement**: Use `MustGetValue()` to enforce non-null results in critical operations.
+- **Type-Safe Failures**: Convert failure results into different value types while preserving error information.
+- **Default Value Handling**: Use `ValueOrDefault` to safely retrieve the value or a default when the result is a
+  failure.
+- **Strict Value Enforcement**: Use the `Value` property to enforce non-null results, throwing an exception on failure.
 
 ## Installation
 
-You can install the **ResultObject** package via NuGet. To do this, use the following command in your project.
+You can install the **ResultObject** package via NuGet. Use the following command in your project.
 
 DotNet CLI:
 
@@ -35,7 +36,7 @@ ResultObject."
 
 ### Basic Result Example
 
-The `Result<T>` class represents the outcome of an operation. It can either be a success (containing a value) or a
+The `Result<TValue>` class represents the outcome of an operation. It can either be a success (containing a value) or a
 failure (containing error details).
 
 ```csharp
@@ -62,28 +63,25 @@ if (failureResult.IsFailure)
 }
 ```
 
-### Implicit Conversions
+### Retrieving Values Safely
 
-The `Result<T>` class supports implicit conversions between results and values for convenience. The implicit conversion
-returns the value if the result is successful, or `default(T)` if the result is a failure or the value is `null`.
+The `Value` property gives you the result value if the operation succeeded, but throws an exception if accessed on a
+failure. If you want to avoid exceptions, you can use the `ValueOrDefault` property to get the value or `null`/default.
 
 ```csharp
-int myValue = Result.Success(100);  // Implicit conversion from result to value.
-Result<int> result = 200;  // Implicit conversion from value to result.
+var value = successResult.ValueOrDefault;  // Retrieves value or default if failed.
 ```
-
-If you need stricter control over `null` values, you can use the `MustGetValue()` method.
 
 ### Enforcing Non-Null Results
 
-In critical scenarios where you need to ensure that the result is non-null, you can use the `MustGetValue()` method.
-This method throws an `InvalidOperationException` if the result is unsuccessful or the value is `null`.
+The `Value` property enforces that the result must be successful and non-null. Accessing it on failure or null value
+throws an `InvalidOperationException`.
 
 ```csharp
 try
 {
     var result = FunctionThatReturnsResult();
-    int value = result.MustGetValue();  // Throws if result is failure or value is null.
+    int value = result.Value;  // Throws if result is failure or value is null.
     Console.WriteLine("Value: " + value);
 }
 catch (InvalidOperationException ex)
@@ -101,32 +99,42 @@ var error = new ResultError("500", "Server Error", "An unexpected error occurred
 var failedResult = Result.Failure<int>(error);
 ```
 
+### Converting Failure to a Different Value Type
+
+You can convert a failure result to a result of a different value type while keeping the error information using
+`ToFailureResult<T>()`.
+
+```csharp
+var failureResult = Result.Failure<int>("500", "Server Error", "An unexpected error occurred.");
+var convertedFailure = failureResult.ToFailureResult<string>();  // Failure with string type.
+```
+
 ## API Reference
 
-### `Result<T>`
+### `Result<TValue>`
 
 Represents the result of an operation with the following properties:
 
 - `IsSuccess`: Indicates if the operation succeeded.
 - `IsFailure`: Indicates if the operation failed.
-- `Value`: The result value if the operation succeeded (or `null` if it failed).
-- `Error`: Contains error details if the operation failed (or `null` if it succeeded).
+- `Value`: The result value if the operation succeeded (or throws an exception if it failed).
+- `ValueOrDefault`: The result value if the operation succeeded, or `default(TValue)` if it failed.
+- `Error`: Contains error details if the operation failed (or throws an exception if it succeeded).
+- `ErrorOrDefault`: The error details if the operation failed, or `null` if it succeeded.
 
 #### Methods
 
-- `ToFailureResult<TValue>()`: Converts a failure result to a result with a different value type while preserving error
+- `ToFailureResult<T>()`: Converts a failure result to a result with a different value type while preserving error
   details.
-- `MustGetValue()`: Throws an `InvalidOperationException` if the result is a failure or the value is `null`.
 
 ### `Result`
 
-Helper class to create `Result<T>` instances:
+Helper class to create `Result<TValue>` instances:
 
-- `Success()`: Creates an empty success result, this can be used to represent a successful operation that doesn't return
-  a value.
-- `Success<T>(T value)`: Creates a success result with value.
-- `Failure<T>(ResultError error)`: Creates a failure result with error details.
-- `Failure<T>(string code, string reason, string message)`: Shorthand to create a failure result with error details.
+- `Success<TValue>(TValue value)`: Creates a success result with a value.
+- `Failure<TValue>(ResultError error)`: Creates a failure result with error details.
+- `Failure<TValue>(string code, string reason, string message)`: Shorthand to create a failure result with error
+  details.
 
 ### `ResultError`
 
