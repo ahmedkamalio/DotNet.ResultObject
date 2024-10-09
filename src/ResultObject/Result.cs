@@ -1,70 +1,82 @@
 namespace ResultObject;
 
 /// <summary>
-/// Represents the result of an operation, which can either be a success or a failure.
+/// Represents the result of an operation, which can either be a success with a value or a failure with an error.
 /// </summary>
-/// <typeparam name="T">The type of the value in case of a successful result.</typeparam>
-public partial class Result<T>(T? value, ResultError? error)
+/// <typeparam name="TValue">The type of the value associated with a successful result.</typeparam>
+public class Result<TValue>(TValue? value, ResultError? error)
 {
     /// <summary>
-    /// Gets a value indicating whether the result is successful.
+    /// Gets a value indicating whether the result represents a successful outcome (i.e., no error occurred).
     /// </summary>
-    public bool IsSuccess => Error is null;
+    public bool IsSuccess { get; } = error == null;
 
     /// <summary>
-    /// Gets a value indicating whether the result is a failure.
+    /// Gets a value indicating whether the result represents a failure (i.e., an error occurred).
     /// </summary>
-    public bool IsFailure => Error is not null;
+    public bool IsFailure { get; } = error != null;
 
     /// <summary>
-    /// Gets the value associated with a successful result, or <c>null</c> if the result is a failure.
+    /// Gets the value of a successful result.
+    /// Throws an exception if the result represents a failure or if the value is null even though the result is marked as successful.
     /// </summary>
-    public T? Value { get; } = value;
-
-    /// <summary>
-    /// Gets the error details associated with a failed result, or <c>null</c> if the result is successful.
-    /// </summary>
-    public ResultError? Error { get; } = error;
-
-    /// <summary>
-    /// <para>
-    /// Creates a new <c>Result</c> instance representing the same failure as this result, 
-    /// but with the value type cast to a different type.
-    /// </para>
-    /// <para>
-    /// The new result will contain the same error information,
-    /// but the value will be set to the default value of the new type.
-    /// </para>
-    /// </summary>
-    /// <typeparam name="TValue">The new type of the value in the returned <c>Result</c>.</typeparam>
-    /// <returns>A new <c>Result</c> instance representing the failure, with the value type changed.</returns>
-    public Result<TValue> ToFailureResult<TValue>() => new(default, Error);
-
-    /// <summary>
-    /// Retrieves the value from the <see cref="Result{T}"/>, throwing an exception if the result is unsuccessful or the value is null.
-    /// </summary>
-    /// <remarks>
-    /// This method should be used in scenarios where the result's value is critical to the operation, and you expect it to be non-null. 
-    /// If the result is a failure or the value is null, an <see cref="InvalidOperationException"/> is thrown, ensuring that invalid states are not silently handled.
-    /// <br />
-    /// This is recommended for business-critical logic where you need strict guarantees that the value is present and valid.
-    /// </remarks>
     /// <exception cref="InvalidOperationException">
-    /// Thrown if the result is a failure or if the value is null in a successful result.
+    /// Thrown when trying to access the value of a failed result, or when the result is successful but the value is null.
     /// </exception>
-    /// <returns>The value of the result if successful and non-null.</returns>
-    public T MustGetValue()
+    public TValue Value
     {
-        if (IsFailure)
+        get
         {
-            throw new InvalidOperationException("Cannot retrieve value from a failed result.");
-        }
+            if (IsFailure)
+            {
+                throw new InvalidOperationException("Cannot retrieve value from a failed result.");
+            }
 
-        if (Value is null)
-        {
-            throw new InvalidOperationException("Result was successful but the value is null.");
-        }
+            if (value == null)
+            {
+                throw new InvalidOperationException("Value is null despite the operation being successful.");
+            }
 
-        return Value;
+            return value;
+        }
     }
+
+    /// <summary>
+    /// Gets the value if the result is successful, or the default value for the type <typeparamref name="TValue"/> if the result is a failure.
+    /// </summary>
+    public TValue? ValueOrDefault => value;
+
+    /// <summary>
+    /// Gets the error associated with a failed result.
+    /// Throws an exception if accessed on a successful result.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when trying to access the error of a successful result.
+    /// </exception>
+    public ResultError Error
+    {
+        get
+        {
+            if (IsSuccess)
+            {
+                throw new InvalidOperationException("Cannot retrieve error from a successful result.");
+            }
+
+            return error!;
+        }
+    }
+
+    /// <summary>
+    /// Gets the error if the result is a failure, or null if the result is successful.
+    /// </summary>
+    public ResultError? ErrorOrDefault => error;
+
+    /// <summary>
+    /// Creates a new <c>Result</c> instance representing the same failure as this result,
+    /// but with the value type cast to a different type.
+    /// The new result will contain the same error, while the value will be set to the default value of the new type.
+    /// </summary>
+    /// <typeparam name="T">The new type for the value in the returned <c>Result</c>.</typeparam>
+    /// <returns>A new <c>Result</c> instance representing the failure, with the value type changed to <typeparamref name="T"/>.</returns>
+    public Result<T> ToFailureResult<T>() => new(default, Error);
 }

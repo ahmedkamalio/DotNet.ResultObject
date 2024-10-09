@@ -3,79 +3,183 @@ namespace ResultObject.Tests;
 public class ResultTests
 {
     [Fact]
-    public void Success_ShouldCreateSuccessfulResult()
+    public void SuccessResult_IsSuccess_ShouldBeTrue()
     {
-        const int value = 42;
+        // Arrange
+        var result = Result.Success("Test Value");
 
-        var result = Result.Success(value);
-
+        // Act & Assert
         Assert.True(result.IsSuccess);
         Assert.False(result.IsFailure);
-        Assert.Equal(value, result.Value);
-        Assert.Null(result.Error);
     }
 
     [Fact]
-    public void Failure_ShouldCreateFailedResult_WithError()
+    public void SuccessResult_Value_ShouldReturnCorrectValue()
     {
-        var error = new ResultError("HTTP_500", "InternalError", "Something went wrong");
+        // Arrange
+        var result = Result.Success("Test Value");
 
-        var result = Result.Failure<object>(error);
+        // Act
+        var value = result.Value;
 
-        Assert.False(result.IsSuccess);
+        // Assert
+        Assert.Equal("Test Value", value);
+    }
+
+    [Fact]
+    public void SuccessResult_ValueOrDefault_ShouldReturnCorrectValue()
+    {
+        // Arrange
+        var result = Result.Success("Test Value");
+
+        // Act
+        var valueOrDefault = result.ValueOrDefault;
+
+        // Assert
+        Assert.Equal("Test Value", valueOrDefault);
+    }
+
+    [Fact]
+    public void SuccessResult_Error_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var result = Result.Success("Test Value");
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => result.Error);
+    }
+
+    [Fact]
+    public void SuccessResult_ErrorOrDefault_ShouldReturnNull()
+    {
+        // Arrange
+        var result = Result.Success("Test Value");
+
+        // Act
+        var errorOrDefault = result.ErrorOrDefault;
+
+        // Assert
+        Assert.Null(errorOrDefault);
+    }
+
+    [Fact]
+    public void FailureResult_IsFailure_ShouldBeTrue()
+    {
+        // Arrange
+        var error = new ResultError("404", "NotFound", "The item was not found.");
+        var result = Result.Failure<string>(error);
+
+        // Act & Assert
         Assert.True(result.IsFailure);
-        Assert.Null(result.Value);
-        Assert.Equal(error, result.Error);
-    }
-
-    [Fact]
-    public void Failure_ShouldCreateFailedResult_WithErrorDetails()
-    {
-        const string code = "HTTP_404";
-        const string reason = "NotFound";
-        const string message = "The item was not found";
-
-        var result = Result.Failure<int>(code, reason, message);
-
         Assert.False(result.IsSuccess);
-        Assert.True(result.IsFailure);
-        Assert.NotNull(result.Error);
-        Assert.Equal(default, result.Value);
-        Assert.Equal(code, result.Error?.Code);
-        Assert.Equal(reason, result.Error?.Reason);
-        Assert.Equal(message, result.Error?.Message);
     }
 
     [Fact]
-    public void ImplicitConversionToValue_ShouldReturnCorrectValue_ForSuccessfulResult()
+    public void FailureResult_Value_ShouldThrowInvalidOperationException()
     {
-        const int value = 99;
-        var result = Result.Success(value);
+        // Arrange
+        var error = new ResultError("404", "NotFound", "The item was not found.");
+        var result = Result.Failure<string>(error);
 
-        int actualValue = result;
-
-        Assert.Equal(value, actualValue);
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => result.Value);
     }
 
     [Fact]
-    public void ImplicitConversionToValue_ShouldReturnDefaultValue_ForFailedResult()
+    public void FailureResult_ValueOrDefault_ShouldReturnDefaultValue()
     {
-        var error = new ResultError("HTTP_500", "InternalError", "Something went wrong");
-        int result = Result.Failure<int>(error);
+        // Arrange
+        var error = new ResultError("404", "NotFound", "The item was not found.");
+        var result = Result.Failure<string>(error);
 
-        Assert.Equal(default, result);
+        // Act
+        var valueOrDefault = result.ValueOrDefault;
+
+        // Assert
+        Assert.Null(valueOrDefault);
     }
 
     [Fact]
-    public void ImplicitConversionFromValue_ShouldCreateSuccessfulResult()
+    public void FailureResult_Error_ShouldReturnCorrectError()
     {
-        const int value = 77;
+        // Arrange
+        var error = new ResultError("404", "NotFound", "The item was not found.");
+        var result = Result.Failure<string>(error);
 
-        Result<int> result = value;
+        // Act
+        var resultError = result.Error;
 
-        Assert.True(result.IsSuccess);
-        Assert.False(result.IsFailure);
-        Assert.Equal(value, result.Value);
-        Assert.Null(result.Error);
+        // Assert
+        Assert.Equal("404", resultError.Code);
+        Assert.Equal("NotFound", resultError.Reason);
+        Assert.Equal("The item was not found.", resultError.Message);
+    }
+
+    [Fact]
+    public void FailureResult_ErrorOrDefault_ShouldReturnCorrectError()
+    {
+        // Arrange
+        var error = new ResultError("404", "NotFound", "The item was not found.");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var errorOrDefault = result.ErrorOrDefault;
+
+        // Assert
+        Assert.Equal(error, errorOrDefault);
+    }
+
+    [Fact]
+    public void FailureResult_WithErrorCode_ShouldReturnCorrectError()
+    {
+        // Arrange
+        var result = Result.Failure<string>("500", "InternalError", "An unexpected error occurred.");
+
+        // Act
+        var error = result.Error;
+
+        // Assert
+        Assert.Equal("500", error.Code);
+        Assert.Equal("InternalError", error.Reason);
+        Assert.Equal("An unexpected error occurred.", error.Message);
+    }
+
+    [Fact]
+    public void ToFailureResult_ShouldConvertToNewFailureResult()
+    {
+        // Arrange
+        var error = new ResultError("404", "NotFound", "The item was not found.");
+        var result = Result.Failure<string>(error);
+
+        // Act
+        var newResult = result.ToFailureResult<int>();
+
+        // Assert
+        Assert.True(newResult.IsFailure);
+        Assert.Equal(error, newResult.Error);
+        Assert.Equal(default, newResult.ValueOrDefault);
+    }
+
+    [Fact]
+    public void ResultError_ToString_ShouldReturnFormattedString()
+    {
+        // Arrange
+        var error = new ResultError("500", "InternalError", "An unexpected error occurred.");
+
+        // Act
+        var resultString = error.ToString();
+
+        // Assert
+        Assert.Equal("Code: 500, Reason: InternalError, Message: An unexpected error occurred.", resultString);
+    }
+
+    [Fact]
+    public void SuccessResult_WithNullValue_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var result = Result.Success<string?>(null);
+
+        // Act & Assert
+        Assert.Throws<InvalidOperationException>(() => result.Value);
     }
 }

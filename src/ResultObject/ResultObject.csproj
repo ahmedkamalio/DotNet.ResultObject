@@ -7,7 +7,7 @@
 
         <!-- NuGet Package Metadata -->
         <PackageId>ResultObject</PackageId>
-        <Version>1.0.1</Version>
+        <Version>1.0.2</Version>
         <Authors>Ahmed Kamal</Authors>
         <Description>A simple result object for DotNet.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
