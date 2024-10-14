@@ -13,3 +13,8 @@
     - Improved error handling validation in tests.
     - Removed exceptions where not necessary (like accessing `Value` on failure).
     - Updated tests to reflect the new `Cast<T>()` behavior.
+
+## v1.0.4
+
+1. `Cast<T>()`:
+    - Update the return type of `Cast<T>()` from `IResult<T>` to `Result<T>`.

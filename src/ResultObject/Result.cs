@@ -46,7 +46,7 @@ public class Result<TValue>(TValue? value, ResultError? error) : IResult<TValue>
     /// A new <see cref="Result{T}"/> with the value cast to the specified type, or the same error if the result was a failure.
     /// </returns>
     /// <exception cref="InvalidCastException">Thrown if the value cannot be cast to the specified type.</exception>
-    public IResult<T> Cast<T>()
+    public Result<T> Cast<T>()
     {
         if (IsFailure)
         {

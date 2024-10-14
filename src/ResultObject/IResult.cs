@@ -39,5 +39,5 @@ public interface IResult<out TValue>
     /// A new <see cref="Result{T}"/> with the value cast to the specified type, or the same error if the result was a failure.
     /// </returns>
     /// <exception cref="InvalidCastException">Thrown if the value cannot be cast to the specified type.</exception>
-    IResult<T> Cast<T>();
+    Result<T> Cast<T>();
 }
