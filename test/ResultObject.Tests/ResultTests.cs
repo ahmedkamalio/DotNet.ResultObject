@@ -27,39 +27,16 @@ public class ResultTests
     }
 
     [Fact]
-    public void SuccessResult_ValueOrDefault_ShouldReturnCorrectValue()
+    public void SuccessResult_Error_ShouldReturnNull()
     {
         // Arrange
         var result = Result.Success("Test Value");
 
         // Act
-        var valueOrDefault = result.ValueOrDefault;
+        var error = result.Error;
 
         // Assert
-        Assert.Equal("Test Value", valueOrDefault);
-    }
-
-    [Fact]
-    public void SuccessResult_Error_ShouldThrowInvalidOperationException()
-    {
-        // Arrange
-        var result = Result.Success("Test Value");
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => result.Error);
-    }
-
-    [Fact]
-    public void SuccessResult_ErrorOrDefault_ShouldReturnNull()
-    {
-        // Arrange
-        var result = Result.Success("Test Value");
-
-        // Act
-        var errorOrDefault = result.ErrorOrDefault;
-
-        // Assert
-        Assert.Null(errorOrDefault);
+        Assert.Null(error);
     }
 
     [Fact]
@@ -75,28 +52,17 @@ public class ResultTests
     }
 
     [Fact]
-    public void FailureResult_Value_ShouldThrowInvalidOperationException()
-    {
-        // Arrange
-        var error = new ResultError("404", "NotFound", "The item was not found.");
-        var result = Result.Failure<string>(error);
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => result.Value);
-    }
-
-    [Fact]
-    public void FailureResult_ValueOrDefault_ShouldReturnDefaultValue()
+    public void FailureResult_Value_ShouldReturnNull()
     {
         // Arrange
         var error = new ResultError("404", "NotFound", "The item was not found.");
         var result = Result.Failure<string>(error);
 
         // Act
-        var valueOrDefault = result.ValueOrDefault;
+        var value = result.Value;
 
         // Assert
-        Assert.Null(valueOrDefault);
+        Assert.Null(value);
     }
 
     [Fact]
@@ -107,26 +73,15 @@ public class ResultTests
         var result = Result.Failure<string>(error);
 
         // Act
-        var resultError = result.Error;
+        if (result.IsSuccess)
+        {
+            throw new InvalidOperationException("Result expected to be failure.");
+        }
 
         // Assert
-        Assert.Equal("404", resultError.Code);
-        Assert.Equal("NotFound", resultError.Reason);
-        Assert.Equal("The item was not found.", resultError.Message);
-    }
-
-    [Fact]
-    public void FailureResult_ErrorOrDefault_ShouldReturnCorrectError()
-    {
-        // Arrange
-        var error = new ResultError("404", "NotFound", "The item was not found.");
-        var result = Result.Failure<string>(error);
-
-        // Act
-        var errorOrDefault = result.ErrorOrDefault;
-
-        // Assert
-        Assert.Equal(error, errorOrDefault);
+        Assert.Equal("404", result.Error.Code);
+        Assert.Equal("NotFound", result.Error.Reason);
+        Assert.Equal("The item was not found.", result.Error.Message);
     }
 
     [Fact]
@@ -136,28 +91,55 @@ public class ResultTests
         var result = Result.Failure<string>("500", "InternalError", "An unexpected error occurred.");
 
         // Act
-        var error = result.Error;
+        if (result.IsSuccess)
+        {
+            throw new InvalidOperationException("Result expected to be failure.");
+        }
 
         // Assert
-        Assert.Equal("500", error.Code);
-        Assert.Equal("InternalError", error.Reason);
-        Assert.Equal("An unexpected error occurred.", error.Message);
+        Assert.Equal("500", result.Error.Code);
+        Assert.Equal("InternalError", result.Error.Reason);
+        Assert.Equal("An unexpected error occurred.", result.Error.Message);
     }
 
     [Fact]
-    public void ToFailureResult_ShouldConvertToNewFailureResult()
+    public void CastResult_SuccessfulCast_ShouldReturnNewResult()
+    {
+        // Arrange
+        var result = Result.Success<object>("Test Value");
+
+        // Act
+        var castResult = result.Cast<string>();
+
+        // Assert
+        Assert.True(castResult.IsSuccess);
+        Assert.Equal("Test Value", castResult.Value);
+    }
+
+    [Fact]
+    public void CastResult_Failure_ShouldPreserveError()
     {
         // Arrange
         var error = new ResultError("404", "NotFound", "The item was not found.");
-        var result = Result.Failure<string>(error);
+        var result = Result.Failure<object>(error);
 
         // Act
-        var newResult = result.ToFailureResult<int>();
+        var castResult = result.Cast<string>();
 
         // Assert
-        Assert.True(newResult.IsFailure);
-        Assert.Equal(error, newResult.Error);
-        Assert.Equal(default, newResult.ValueOrDefault);
+        Assert.True(castResult.IsFailure);
+        Assert.Equal(error, castResult.Error);
+        Assert.Null(castResult.Value);
+    }
+
+    [Fact]
+    public void CastResult_InvalidCast_ShouldThrowException()
+    {
+        // Arrange
+        var result = Result.Success<object>(42);
+
+        // Act & Assert
+        Assert.Throws<InvalidCastException>(() => result.Cast<string>());
     }
 
     [Fact]
@@ -174,12 +156,14 @@ public class ResultTests
     }
 
     [Fact]
-    public void SuccessResult_WithNullValue_ShouldThrowInvalidOperationException()
+    public void SuccessResult_WithNullValue_ShouldHaveIsSuccessFalse()
     {
         // Arrange
         var result = Result.Success<string?>(null);
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => result.Value);
+        Assert.False(result.IsSuccess);
+        Assert.True(result.IsFailure);
+        Assert.Null(result.Value);
     }
 }
