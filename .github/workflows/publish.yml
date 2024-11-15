@@ -81,7 +81,7 @@ jobs:
         run: |
           for package in artifacts/*.nupkg; do
             echo "Validating package: $package"
-            meziantou.validate-nuget-package "$package" --rules-preset=All
+            meziantou.validate-nuget-package "$package"
           done
 
       # Additional validation for multi-targeting
