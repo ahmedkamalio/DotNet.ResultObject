@@ -9,32 +9,51 @@ on:
     branches:
       - '*'
 
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dotnet-version: [ '8.0.x', '9.0.x' ]
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for version calculation
 
-      - name: Setup .NET Core
+      - name: Setup .NET ${{ matrix.dotnet-version }}
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Display dotnet version
+        run: dotnet --info
 
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build solution
-        run: dotnet build -c Release --no-restore
+        run: dotnet build -c Release --no-restore /p:ContinuousIntegrationBuild=true
 
       - name: Run tests
         run: dotnet test -c Release --no-build --verbosity normal
+
+      # Package will be created for both target frameworks
+      - name: Create NuGet package
+        run: dotnet pack -c Release --no-build --include-symbols -p:SymbolPackageFormat=snupkg
 
       - name: Upload NuGet Package Artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
-          path: src/ResultObject/bin/Release
+          path: |
+            src/ResultObject/bin/Release/*.nupkg
+            src/ResultObject/bin/Release/*.snupkg
 
   validate:
     if: github.ref == 'refs/heads/main'
@@ -44,22 +63,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET Core
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
       - name: Download NuGet Package Artifact
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages
-          path: src/ResultObject/bin/Release
+          path: artifacts
 
       - name: Install Meziantou NuGet Package Validation Tool
         run: dotnet tool install --global Meziantou.Framework.NuGetPackageValidation.Tool
 
       - name: Validate NuGet Package
-        run: meziantou.validate-nuget-package src/ResultObject/bin/Release/*.nupkg
+        run: |
+          for package in artifacts/*.nupkg; do
+            echo "Validating package: $package"
+            meziantou.validate-nuget-package "$package" \
+              --rules-preset=All \
+              --excluded-rules=NHL1001 # Exclude if you don't want to enforce license check
+          done
+
+      # Additional validation for multi-targeting
+      - name: Validate Multi-targeting
+        run: |
+          for package in artifacts/*.nupkg; do
+            echo "Checking frameworks in: $package"
+            dotnet-validate package frameworks "$package" \
+              --framework net8.0 \
+              --framework net9.0
+          done
 
   publish:
     if: github.ref == 'refs/heads/main'
@@ -67,20 +104,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET Core
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: |
+            8.0.x
+            9.0.x
 
       - name: Download NuGet Package Artifact
         uses: actions/download-artifact@v4
         with:
           name: nuget-packages
-          path: src/ResultObject/bin/Release
+          path: artifacts
 
       - name: Publish to NuGet
-        run: dotnet nuget push src/ResultObject/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        run: |
+          for package in artifacts/*.nupkg; do
+            dotnet nuget push "$package" \
+              --api-key ${{ secrets.NUGET_API_KEY }} \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

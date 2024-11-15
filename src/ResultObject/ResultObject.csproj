@@ -1,15 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 
         <!-- NuGet Package Metadata -->
         <PackageId>ResultObject</PackageId>
-        <Version>1.0.4</Version>
+        <Version>1.1.0</Version>
         <Authors>Ahmed Kamal</Authors>
-        <Description>A simple result object for DotNet.</Description>
+        <Description>A robust Result type for .NET with built-in error categorization, supporting type-safe success/failure scenarios without exceptions.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/ahmedkamalio/DotNet.ResultObject</RepositoryUrl>
         <PackageProjectUrl>https://github.com/ahmedkamalio/DotNet.ResultObject</PackageProjectUrl>
@@ -45,6 +44,8 @@
 
         <!-- Enable XML documentation generation -->
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <LangVersion>13</LangVersion>
+        <TargetFrameworks>net9.0;net8.0</TargetFrameworks>
     </PropertyGroup>
 
     <ItemGroup>

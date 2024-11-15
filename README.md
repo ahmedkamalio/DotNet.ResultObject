@@ -4,116 +4,182 @@
 
 ## Overview
 
-The **ResultObject** package provides a utility to handle the outcome of operations, either as a success or failure,
-without relying on exceptions. This promotes cleaner code by clearly separating success from failure scenarios and
-encapsulating error information.
+The **ResultObject** package provides a robust utility to handle operation outcomes in .NET applications. It promotes
+clean code by clearly separating success from failure scenarios, offering rich error categorization, and providing
+type-safe error handling without relying on exceptions.
 
 ## Features
 
-- **Success/Failure Handling**: Easily manage the outcome of operations with type-safe results.
-- **Generic Result Type**: Results can encapsulate any type of value.
-- **Error Handling**: Detailed error information available in case of failures.
-- **Type-Safe Casting**: Use `Cast<T>()` to transform the result's value while maintaining error information.
-- **Nullable Value Access**: Retrieve values or errors directly without throwing exceptions.
+- **Success/Failure Handling**: Type-safe operation results with clear success/failure states
+- **Error Categories**: Built-in and custom error categorization for better error handling
+- **Framework Support**: Targets both .NET 8.0 and .NET 9.0
+- **Generic Result Types**: Type-safe results with support for any value type
+- **Error Management**: Detailed error information with categorization and sanitization
+- **Type-Safe Casting**: Transform result values while preserving error information
+- **Unit Results**: Support for void-equivalent operations
+- **Stack Trace Support**: Optional stack traces for debugging
+- **Error Sanitization**: Configurable error detail sanitization for external exposure
 
 ## Installation
 
-You can install the **ResultObject** package via NuGet:
+Install via NuGet:
 
 ```bash
 dotnet add package ResultObject
 ```
 
-Alternatively, use the Visual Studio package manager UI to search for "ResultObject."
+Or search for "ResultObject" in the Visual Studio package manager.
 
-## Usage
+## Basic Usage
 
-### Basic Result Example
+### Creating Results
 
 ```csharp
+// Success results
 var successResult = Result.Success(42);
-var failureResult = Result.Failure<int>("404", "Not Found", "The requested resource was not found.");
+var voidSuccess = Result.Success(); // Returns Result<Unit>
+
+// Failure results
+var failureResult = Result.Failure<int>(
+    "404", 
+    "Not Found", 
+    "The requested resource was not found."
+);
 ```
 
-### Checking Success or Failure
+### Checking Results
 
 ```csharp
 if (successResult.IsSuccess)
 {
-    Console.WriteLine("Operation succeeded with value: " + successResult.Value);
+    Console.WriteLine($"Operation succeeded with value: {successResult.Value}");
 }
 
 if (failureResult.IsFailure)
 {
-    Console.WriteLine($"Operation failed with error: {failureResult.Error.Message}");
+    Console.WriteLine($"Operation failed: {failureResult.Error.Message}");
 }
 ```
 
-### Type Casting Results
-
-Use `Cast<T>()` to cast the value to a different type while preserving error details on failure.
+### Using Error Categories
 
 ```csharp
-var result = Result.Success<object>("Test Value");
+var error = new ResultError(
+    "USER_404",
+    "User Not Found",
+    "The specified user does not exist",
+    ErrorCategory.NotFound
+);
+
+var result = Result.Failure<User>(error);
+
+if (result.Error?.Category == ErrorCategory.NotFound)
+{
+    // Handle not found case
+}
+```
+
+### Custom Error Categories
+
+```csharp
+public enum OrderErrorCategory
+{
+    Validation,
+    Processing,
+    Payment
+}
+
+var error = new ResultError<OrderErrorCategory>(
+    "ORD001",
+    "Invalid Order",
+    "Order total cannot be negative",
+    OrderErrorCategory.Validation
+);
+
+var result = Result.Failure<Order, OrderErrorCategory>(error);
+```
+
+### Error Sanitization
+
+```csharp
+var error = new ResultError(
+    "DB_ERROR",
+    "Database Connection Failed",
+    "Failed to connect to server: sensitive-server:1433"
+)
+.WithStackTrace();
+
+// Sanitize for external use
+var sanitized = error.Sanitize(ResultError.SanitizationLevel.Full);
+```
+
+### Type Casting
+
+```csharp
+var result = Result.Success<object>("42");
 var castResult = result.Cast<string>();
 
 if (castResult.IsSuccess)
 {
-    Console.WriteLine("Successfully cast value: " + castResult.Value);
+    Console.WriteLine($"Cast successful: {castResult.Value}");
 }
 ```
 
-### Error Handling
-
-Create and inspect detailed errors with `ResultError`.
+### Unit Results (Void Operations)
 
 ```csharp
-var error = new ResultError("500", "Server Error", "An unexpected error occurred.");
-var failedResult = Result.Failure<int>(error);
-
-Console.WriteLine($"Error Code: {failedResult.Error.Code}");
-```
-
-### Handling Nullable Values
-
-A result with a `null` value is treated as a failure.
-
-```csharp
-var result = Result.Success<string?>(null);
-
-if (result.IsFailure)
+public Result<Unit> DeleteUser(string userId)
 {
-    Console.WriteLine("Result is not successful.");
+    try
+    {
+        // Delete user logic
+        return Result.Success();
+    }
+    catch (Exception ex)
+    {
+        return Result.Failure<Unit>("DELETE_FAILED", "Deletion Failed", ex.Message);
+    }
 }
 ```
 
 ## API Reference
 
-### `IResult<TValue>`
+### `IResult<TValue, TErrorCategory>`
 
-- `IsSuccess`: Indicates if the operation succeeded.
-- `IsFailure`: Indicates if the operation failed.
-- `Value`: The value of the operation if successful, otherwise `null`.
-- `Error`: The error information if the operation failed, otherwise `null`.
+- `IsSuccess`: Indicates if the operation succeeded
+- `IsFailure`: Indicates if the operation failed
+- `Value`: The operation's value (if successful)
+- `Error`: Error information (if failed)
+- `Cast<T>()`: Safely cast the result's value
 
-### `Result<TValue>`
+### `Result` Static Class
 
-- **Methods**:
-    - `Cast<T>()`: Safely cast the result's value to a different type, or propagate the error if the cast fails.
+- `Success()`: Creates a Unit result
+- `Success<TValue>(TValue value)`: Creates a success result
+- `Failure<TValue>(ResultError error)`: Creates a failure result
+- `Failure<TValue>(string code, string reason, string message)`: Creates a failure result
+- `Failure<TValue, TErrorCategory>(ResultError<TErrorCategory> error)`: Creates a categorized failure result
 
-### `Result`
+### `ResultError<TErrorCategory>`
 
-- **Static Methods**:
-    - `Success<TValue>(TValue value)`: Creates a success result.
-    - `Failure<TValue>(ResultError error)`: Creates a failure result with error details.
-    - `Failure<TValue>(string code, string reason, string message)`: Creates a failure result with a detailed error.
+- `Code`: Error identifier
+- `Reason`: Brief error description
+- `Message`: Detailed error message
+- `Category`: Error category
+- `InnerError`: Nested error information
+- `StackTrace`: Optional stack trace
+- `WithStackTrace()`: Adds current stack trace
+- `Sanitize()`: Creates sanitized error copy
 
-### `ResultError`
+### `ErrorCategory` (Built-in)
 
-- **Properties**:
-    - `Code`: A code representing the type of error.
-    - `Reason`: A brief reason for the error.
-    - `Message`: A detailed message describing the error.
+- `Validation`: Input/business rule violations
+- `NotFound`: Resource not found
+- `Unauthorized`: Authentication required/failed
+- `Forbidden`: Insufficient permissions
+- `Conflict`: State conflicts
+- `Internal`: System errors
+- `External`: External service errors
 
 ## License
 

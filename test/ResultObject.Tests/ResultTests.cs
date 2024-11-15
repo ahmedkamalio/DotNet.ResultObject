@@ -3,167 +3,340 @@ namespace ResultObject.Tests;
 public class ResultTests
 {
     [Fact]
-    public void SuccessResult_IsSuccess_ShouldBeTrue()
+    public void Success_WithValue_ShouldCreateSuccessResult()
     {
         // Arrange
-        var result = Result.Success("Test Value");
-
-        // Act & Assert
-        Assert.True(result.IsSuccess);
-        Assert.False(result.IsFailure);
-    }
-
-    [Fact]
-    public void SuccessResult_Value_ShouldReturnCorrectValue()
-    {
-        // Arrange
-        var result = Result.Success("Test Value");
+        const string value = "test";
 
         // Act
-        var value = result.Value;
+        var result = Result.Success(value);
 
         // Assert
-        Assert.Equal("Test Value", value);
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.IsFailure.Should().BeFalse();
+        result.Value.Should().Be(value);
+        result.Error.Should().BeNull();
     }
 
     [Fact]
-    public void SuccessResult_Error_ShouldReturnNull()
+    public void Success_WithoutValue_ShouldCreateUnitResult()
+    {
+        // Act
+        var result = Result.Success();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.IsFailure.Should().BeFalse();
+        result.Value.Should().Be(Unit.Value);
+        result.Error.Should().BeNull();
+    }
+
+    [Fact]
+    public void Failure_WithError_ShouldCreateFailureResult()
     {
         // Arrange
-        var result = Result.Success("Test Value");
+        var error = new ResultError("CODE", "Reason", "Message");
 
         // Act
-        var error = result.Error;
-
-        // Assert
-        Assert.Null(error);
-    }
-
-    [Fact]
-    public void FailureResult_IsFailure_ShouldBeTrue()
-    {
-        // Arrange
-        var error = new ResultError("404", "NotFound", "The item was not found.");
         var result = Result.Failure<string>(error);
 
-        // Act & Assert
-        Assert.True(result.IsFailure);
-        Assert.False(result.IsSuccess);
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeFalse();
+        result.IsFailure.Should().BeTrue();
+        result.Value.Should().BeNull();
+        result.Error.Should().Be(error);
     }
 
     [Fact]
-    public void FailureResult_Value_ShouldReturnNull()
+    public void Failure_WithErrorDetails_ShouldCreateFailureResult()
     {
         // Arrange
-        var error = new ResultError("404", "NotFound", "The item was not found.");
-        var result = Result.Failure<string>(error);
+        const string code = "CODE";
+        const string reason = "Reason";
+        const string message = "Message";
 
         // Act
-        var value = result.Value;
+        var result = Result.Failure<string>(code, reason, message);
 
         // Assert
-        Assert.Null(value);
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeFalse();
+        result.IsFailure.Should().BeTrue();
+        result.Value.Should().BeNull();
+        result.Error.Should().NotBeNull();
+        result.Error!.Code.Should().Be(code);
+        result.Error.Reason.Should().Be(reason);
+        result.Error.Message.Should().Be(message);
     }
+}
 
+public class ResultGenericTests
+{
     [Fact]
-    public void FailureResult_Error_ShouldReturnCorrectError()
+    public void Cast_FromSuccessResult_ShouldReturnCastSuccessResult()
     {
         // Arrange
-        var error = new ResultError("404", "NotFound", "The item was not found.");
-        var result = Result.Failure<string>(error);
+        const int value = 42;
+        var result = Result.Success(value);
 
         // Act
-        if (result.IsSuccess)
-        {
-            throw new InvalidOperationException("Result expected to be failure.");
-        }
+        var castResult = result.Cast<object>();
 
         // Assert
-        Assert.Equal("404", result.Error.Code);
-        Assert.Equal("NotFound", result.Error.Reason);
-        Assert.Equal("The item was not found.", result.Error.Message);
+        castResult.Should().NotBeNull();
+        castResult.IsSuccess.Should().BeTrue();
+        castResult.Value.Should().Be(value);
     }
 
     [Fact]
-    public void FailureResult_WithErrorCode_ShouldReturnCorrectError()
+    public void Cast_FromFailureResult_ShouldReturnFailureResult()
     {
         // Arrange
-        var result = Result.Failure<string>("500", "InternalError", "An unexpected error occurred.");
-
-        // Act
-        if (result.IsSuccess)
-        {
-            throw new InvalidOperationException("Result expected to be failure.");
-        }
-
-        // Assert
-        Assert.Equal("500", result.Error.Code);
-        Assert.Equal("InternalError", result.Error.Reason);
-        Assert.Equal("An unexpected error occurred.", result.Error.Message);
-    }
-
-    [Fact]
-    public void CastResult_SuccessfulCast_ShouldReturnNewResult()
-    {
-        // Arrange
-        var result = Result.Success<object>("Test Value");
+        var error = new ResultError("CODE", "Reason", "Message");
+        var result = Result.Failure<int>(error);
 
         // Act
         var castResult = result.Cast<string>();
 
         // Assert
-        Assert.True(castResult.IsSuccess);
-        Assert.Equal("Test Value", castResult.Value);
+        castResult.Should().NotBeNull();
+        castResult.IsFailure.Should().BeTrue();
+        castResult.Error.Should().Be(error);
     }
 
     [Fact]
-    public void CastResult_Failure_ShouldPreserveError()
+    public void Cast_WithInvalidCast_ShouldThrowInvalidCastException()
     {
         // Arrange
-        var error = new ResultError("404", "NotFound", "The item was not found.");
-        var result = Result.Failure<object>(error);
-
-        // Act
-        var castResult = result.Cast<string>();
-
-        // Assert
-        Assert.True(castResult.IsFailure);
-        Assert.Equal(error, castResult.Error);
-        Assert.Null(castResult.Value);
-    }
-
-    [Fact]
-    public void CastResult_InvalidCast_ShouldThrowException()
-    {
-        // Arrange
-        var result = Result.Success<object>(42);
+        const string value = "test";
+        var result = Result.Success(value);
 
         // Act & Assert
-        Assert.Throws<InvalidCastException>(() => result.Cast<string>());
+        result.Invoking(r => r.Cast<int>())
+            .Should().Throw<InvalidCastException>();
     }
 
     [Fact]
-    public void ResultError_ToString_ShouldReturnFormattedString()
+    public void Constructor_WithNullValue_ShouldCreateFailureResult()
     {
-        // Arrange
-        var error = new ResultError("500", "InternalError", "An unexpected error occurred.");
-
         // Act
-        var resultString = error.ToString();
+        var result = new Result<string>(null, null);
 
         // Assert
-        Assert.Equal("Code: 500, Reason: InternalError, Message: An unexpected error occurred.", resultString);
+        result.IsSuccess.Should().BeFalse();
+        result.IsFailure.Should().BeTrue();
+        result.Value.Should().BeNull();
+    }
+}
+
+public class ResultErrorTests
+{
+    [Fact]
+    public void Constructor_WithBasicProperties_ShouldCreateError()
+    {
+        // Arrange
+        const string code = "CODE";
+        const string reason = "Reason";
+        const string message = "Message";
+        var category = ErrorCategory.Validation;
+
+        // Act
+        var error = new ResultError(code, reason, message, category);
+
+        // Assert
+        error.Should().NotBeNull();
+        error.Code.Should().Be(code);
+        error.Reason.Should().Be(reason);
+        error.Message.Should().Be(message);
+        error.Category.Should().Be(category);
+        error.InnerError.Should().BeNull();
+        error.StackTrace.Should().BeNull();
     }
 
     [Fact]
-    public void SuccessResult_WithNullValue_ShouldHaveIsSuccessFalse()
+    public void WithStackTrace_ShouldCreateNewInstanceWithStackTrace()
     {
         // Arrange
-        var result = Result.Success<string?>(null);
+        var error = new ResultError("CODE", "Reason", "Message");
 
-        // Act & Assert
-        Assert.False(result.IsSuccess);
-        Assert.True(result.IsFailure);
-        Assert.Null(result.Value);
+        // Act
+        var errorWithStack = error.WithStackTrace();
+
+        // Assert
+        errorWithStack.Should().NotBe(error);
+        errorWithStack.StackTrace.Should().NotBeNull();
+        errorWithStack.StackTrace.Should().Contain("at ");
+    }
+
+    [Theory]
+    [InlineData(ResultError.SanitizationLevel.None)]
+    [InlineData(ResultError.SanitizationLevel.MessageOnly)]
+    [InlineData(ResultError.SanitizationLevel.Full)]
+    public void Sanitize_WithDifferentLevels_ShouldSanitizeAppropriately(
+        ResultError.SanitizationLevel level)
+    {
+        // Arrange
+        var error = new ResultError(
+                "SENSITIVE_CODE",
+                "Sensitive Reason",
+                "Sensitive Message",
+                ErrorCategory.Internal)
+            .WithStackTrace();
+
+        // Act
+        var sanitized = error.Sanitize(level);
+
+        // Assert
+        switch (level)
+        {
+            case ResultError.SanitizationLevel.None:
+                sanitized.Should().BeEquivalentTo(error);
+                break;
+
+            case ResultError.SanitizationLevel.MessageOnly:
+                sanitized.Code.Should().Be(error.Code);
+                sanitized.Reason.Should().Be(error.Reason);
+                sanitized.Message.Should().Be("An error occurred.");
+                sanitized.StackTrace.Should().BeNull();
+                break;
+
+            case ResultError.SanitizationLevel.Full:
+                sanitized.Code.Should().Be(error.Code);
+                sanitized.Reason.Should().Be("Internal Error");
+                sanitized.Message.Should().Be("An error occurred.");
+                sanitized.StackTrace.Should().BeNull();
+                sanitized.InnerError.Should().BeNull();
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(level), level, null);
+        }
+    }
+
+    [Fact]
+    public void ToString_WithFullError_ShouldIncludeAllComponents()
+    {
+        // Arrange
+        var innerError = new ResultError("INNER", "Inner Reason", "Inner Message");
+        var error = new ResultError(
+                "CODE",
+                "Reason",
+                "Message",
+                ErrorCategory.Validation,
+                innerError)
+            .WithStackTrace();
+
+        // Act
+        var toString = error.ToString();
+
+        // Assert
+        toString.Should().Contain("[Validation]");
+        toString.Should().Contain("Code: CODE");
+        toString.Should().Contain("Reason: Reason");
+        toString.Should().Contain("Message: Message");
+        toString.Should().Contain("Stack Trace:");
+        toString.Should().Contain("Inner Error:");
+        toString.Should().Contain("INNER");
+    }
+}
+
+public class UnitTests
+{
+    [Fact]
+    public void Value_ShouldBeSingleton()
+    {
+        // Arrange
+        var value1 = Unit.Value;
+        var value2 = Unit.Value;
+
+        // Assert
+        value1.Should().Be(value2);
+    }
+
+    [Fact]
+    public void EqualityComparison_ShouldAlwaysBeTrue()
+    {
+        // Arrange
+        var unit1 = new Unit();
+        var unit2 = new Unit();
+
+        // Assert
+        unit1.Should().Be(unit2);
+        unit1.Equals(unit2).Should().BeTrue();
+    }
+}
+
+[Collection("Result Integration Tests")]
+public class ResultIntegrationTests
+{
+    [Fact]
+    public void ComplexScenario_WithChainedOperations_ShouldHandleErrorsProperly()
+    {
+        // Arrange
+        var initialResult = Result.Success(42);
+
+        // Act
+        var finalResult = initialResult
+            .Cast<object>()
+            .Cast<int>()
+            .Cast<IComparable>();
+
+        // Assert
+        finalResult.Should().NotBeNull();
+        finalResult.IsSuccess.Should().BeTrue();
+        finalResult.Value.Should().Be(42);
+    }
+
+    [Fact]
+    public void ComplexScenario_WithErrorHandling_ShouldPreserveErrorInformation()
+    {
+        // Arrange
+        var error = new ResultError(
+            "COMPLEX_ERROR",
+            "Complex Operation Failed",
+            "Multiple steps failed",
+            ErrorCategory.Internal,
+            new ResultError("INNER", "Inner Failure", "Step 2 failed"));
+
+        var result = Result.Failure<int>(error);
+
+        // Act
+        var sanitizedResult = Result.Failure<string, ErrorCategory>(
+            result.Error!.Sanitize(ResultError.SanitizationLevel.Full)
+        );
+
+        // Assert
+        sanitizedResult.Error.Should().NotBeNull();
+        sanitizedResult.Error!.Message.Should().Be("An error occurred.");
+        sanitizedResult.Error.Reason.Should().Be("Internal Error");
+        sanitizedResult.Error.InnerError.Should().BeNull();
+    }
+}
+
+[Collection("Error Category Tests")]
+public class ErrorCategoryTests
+{
+    [Theory]
+    [InlineData(ErrorCategory.Validation)]
+    [InlineData(ErrorCategory.NotFound)]
+    [InlineData(ErrorCategory.Unauthorized)]
+    [InlineData(ErrorCategory.Forbidden)]
+    [InlineData(ErrorCategory.Conflict)]
+    [InlineData(ErrorCategory.Internal)]
+    [InlineData(ErrorCategory.External)]
+    public void ErrorCategory_ShouldBeUsableInResults(ErrorCategory category)
+    {
+        // Arrange & Act
+        var error = new ResultError(
+            "TEST",
+            "Test Reason",
+            "Test Message",
+            category);
+
+        // Assert
+        error.Category.Should().Be(category);
     }
 }
