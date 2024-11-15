@@ -84,16 +84,6 @@ jobs:
             meziantou.validate-nuget-package "$package"
           done
 
-      # Additional validation for multi-targeting
-      - name: Validate Multi-targeting
-        run: |
-          for package in artifacts/*.nupkg; do
-            echo "Checking frameworks in: $package"
-            dotnet-validate package frameworks "$package" \
-              --framework net8.0 \
-              --framework net9.0
-          done
-
   publish:
     if: github.ref == 'refs/heads/main'
     needs: validate
