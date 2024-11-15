@@ -1,6 +1,75 @@
 namespace ResultObject;
 
 /// <summary>
+/// Base record for error result implementations providing common functionality.
+/// </summary>
+public abstract record ResultErrorBase(
+    string Code,
+    string Reason,
+    string Message,
+    ResultError? InnerError,
+    string? StackTrace
+)
+{
+    /// <summary>
+    /// Defines the level of detail to include when sanitizing error information.
+    /// </summary>
+    public enum SanitizationLevel
+    {
+        /// <summary>
+        /// No information is removed or modified.
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// Only sensitive message content is sanitized while preserving error structure.
+        /// </summary>
+        MessageOnly,
+
+        /// <summary>
+        /// All potentially sensitive information is removed, including stack traces and inner errors.
+        /// </summary>
+        Full
+    }
+
+    /// <summary>
+    /// Creates a new instance of the error with the current stack trace information.
+    /// </summary>
+    /// <returns>A new error instance with the current stack trace.</returns>
+    public abstract ResultErrorBase WithStackTrace();
+
+    /// <summary>
+    /// Creates a sanitized version of the error suitable for external presentation.
+    /// </summary>
+    protected ResultErrorBase Sanitize(SanitizationLevel level) =>
+        level switch
+        {
+            SanitizationLevel.None => this,
+            SanitizationLevel.MessageOnly => this with
+            {
+                Message = "An error occurred.",
+                StackTrace = null
+            },
+            SanitizationLevel.Full => this with
+            {
+                Message = "An error occurred.",
+                Reason = "Internal Error",
+                StackTrace = null,
+                InnerError = null
+            },
+            _ => this
+        };
+
+    /// <summary>
+    /// Returns a string representation of the error, including code, reason, and message.
+    /// </summary>
+    public override string ToString() =>
+        $"Code: {Code}, Reason: {Reason}, Message: {Message}" +
+        (StackTrace != null ? $"\nStack Trace: {StackTrace}" : string.Empty) +
+        (InnerError != null ? $"\nInner Error: {InnerError}" : string.Empty);
+}
+
+/// <summary>
 /// Represents a strongly-typed error result with a customizable error category.
 /// </summary>
 /// <typeparam name="TErrorCategory">The enum type representing error categories.</typeparam>
@@ -36,8 +105,8 @@ public record ResultError<TErrorCategory>(
     string Message,
     TErrorCategory? Category = null,
     ResultError? InnerError = null,
-    string? StackTrace = null
-) where TErrorCategory : struct, Enum
+    string? StackTrace = null) : ResultErrorBase(Code, Reason, Message, InnerError, StackTrace)
+    where TErrorCategory : struct, Enum
 {
     /// <summary>
     /// Creates a new instance of the error with the current stack trace information.
@@ -53,15 +122,13 @@ public record ResultError<TErrorCategory>(
     ///     .WithStackTrace();
     /// </code>
     /// </example>
-    public ResultError<TErrorCategory> WithStackTrace() =>
-        new(Code, Reason, Message, Category, InnerError, Environment.StackTrace);
+    public override ResultError<TErrorCategory> WithStackTrace() => this with { StackTrace = Environment.StackTrace };
 
     /// <summary>
     /// Creates a sanitized version of the error suitable for external presentation.
     /// </summary>
     /// <param name="level">The desired level of sanitization to apply.</param>
     /// <returns>A new <see cref="ResultError{TErrorCategory}"/> instance with sanitized information.</returns>
-    /// <exception cref="ArgumentException">Thrown when an invalid sanitization level is provided.</exception>
     /// <remarks>
     /// Sanitization helps prevent sensitive information leakage when errors are exposed to external systems or end users.
     /// Different levels of sanitization can be applied based on the security requirements:
@@ -79,27 +146,8 @@ public record ResultError<TErrorCategory>(
     /// // Results in a sanitized error with generic message
     /// </code>
     /// </example>
-    public ResultError<TErrorCategory> Sanitize(
-        ResultError.SanitizationLevel level = ResultError.SanitizationLevel.MessageOnly)
-    {
-        return level switch
-        {
-            ResultError.SanitizationLevel.None => this,
-            ResultError.SanitizationLevel.MessageOnly => this with
-            {
-                Message = "An error occurred.",
-                StackTrace = null
-            },
-            ResultError.SanitizationLevel.Full => this with
-            {
-                Message = "An error occurred.",
-                Reason = "Internal Error",
-                StackTrace = null,
-                InnerError = null
-            },
-            _ => throw new ArgumentException($"Invalid sanitization level: {level}")
-        };
-    }
+    public new ResultError<TErrorCategory> Sanitize(SanitizationLevel level = SanitizationLevel.MessageOnly) =>
+        (ResultError<TErrorCategory>)base.Sanitize(level);
 
     /// <summary>
     /// Returns a string representation of the error, including category, code, reason, and message.
@@ -109,10 +157,7 @@ public record ResultError<TErrorCategory>(
     /// The string representation includes all critical error information and any inner error details.
     /// This is useful for logging and debugging purposes.
     /// </remarks>
-    public override string ToString() =>
-        $"[{Category}] Code: {Code}, Reason: {Reason}, Message: {Message}" +
-        (StackTrace != null ? $"\nStack Trace: {StackTrace}" : string.Empty) +
-        (InnerError != null ? $"\nInner Error: {InnerError}" : string.Empty);
+    public override string ToString() => $"[{Category}] {base.ToString()}";
 }
 
 /// <summary>
@@ -148,25 +193,45 @@ public record ResultError(
     : ResultError<ErrorCategory>(Code, Reason, Message, Category, InnerError, StackTrace)
 {
     /// <summary>
-    /// Defines the level of detail to include when sanitizing error information.
+    /// Creates a new instance of the error with the current stack trace information.
     /// </summary>
-    public enum SanitizationLevel
-    {
-        /// <summary>
-        /// No information is removed or modified.
-        /// </summary>
-        None,
+    /// <returns>A new <see cref="ResultError"/> instance with the current stack trace.</returns>
+    /// <remarks>
+    /// This method is useful for capturing the call stack at specific points during error handling.
+    /// The stack trace can help with debugging and error tracking in development environments.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var error = new ResultError("CODE", "Reason", "Message")
+    ///     .WithStackTrace();
+    /// </code>
+    /// </example>
+    public new ResultError WithStackTrace() => (ResultError)base.WithStackTrace();
 
-        /// <summary>
-        /// Only sensitive message content is sanitized while preserving error structure.
-        /// </summary>
-        MessageOnly,
-
-        /// <summary>
-        /// All potentially sensitive information is removed, including stack traces and inner errors.
-        /// </summary>
-        Full
-    }
+    /// <summary>
+    /// Creates a sanitized version of the error suitable for external presentation.
+    /// </summary>
+    /// <param name="level">The desired level of sanitization to apply.</param>
+    /// <returns>A new <see cref="ResultError"/> instance with sanitized information.</returns>
+    /// <remarks>
+    /// Sanitization helps prevent sensitive information leakage when errors are exposed to external systems or end users.
+    /// Different levels of sanitization can be applied based on the security requirements:
+    /// - None: No sanitization is applied
+    /// - MessageOnly: Only the message is sanitized
+    /// - Full: All potentially sensitive information is removed
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// var error = new ResultError(
+    ///     "SENSITIVE_ERROR",
+    ///     "Database Error",
+    ///     "Failed to connect to db server: myserver:1433")
+    ///     .Sanitize(SanitizationLevel.Full);
+    /// // Results in a sanitized error with generic message
+    /// </code>
+    /// </example>
+    public new ResultError Sanitize(SanitizationLevel level = SanitizationLevel.MessageOnly) =>
+        (ResultError)base.Sanitize(level);
 
     /// <summary>
     /// Returns a string representation of the error, including category, code, reason, and message.

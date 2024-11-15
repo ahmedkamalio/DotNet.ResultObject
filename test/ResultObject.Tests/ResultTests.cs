@@ -172,11 +172,10 @@ public class ResultErrorTests
     }
 
     [Theory]
-    [InlineData(ResultError.SanitizationLevel.None)]
-    [InlineData(ResultError.SanitizationLevel.MessageOnly)]
-    [InlineData(ResultError.SanitizationLevel.Full)]
-    public void Sanitize_WithDifferentLevels_ShouldSanitizeAppropriately(
-        ResultError.SanitizationLevel level)
+    [InlineData(ResultErrorBase.SanitizationLevel.None)]
+    [InlineData(ResultErrorBase.SanitizationLevel.MessageOnly)]
+    [InlineData(ResultErrorBase.SanitizationLevel.Full)]
+    public void Sanitize_WithDifferentLevels_ShouldSanitizeAppropriately(ResultErrorBase.SanitizationLevel level)
     {
         // Arrange
         var error = new ResultError(
@@ -192,18 +191,18 @@ public class ResultErrorTests
         // Assert
         switch (level)
         {
-            case ResultError.SanitizationLevel.None:
+            case ResultErrorBase.SanitizationLevel.None:
                 sanitized.Should().BeEquivalentTo(error);
                 break;
 
-            case ResultError.SanitizationLevel.MessageOnly:
+            case ResultErrorBase.SanitizationLevel.MessageOnly:
                 sanitized.Code.Should().Be(error.Code);
                 sanitized.Reason.Should().Be(error.Reason);
                 sanitized.Message.Should().Be("An error occurred.");
                 sanitized.StackTrace.Should().BeNull();
                 break;
 
-            case ResultError.SanitizationLevel.Full:
+            case ResultErrorBase.SanitizationLevel.Full:
                 sanitized.Code.Should().Be(error.Code);
                 sanitized.Reason.Should().Be("Internal Error");
                 sanitized.Message.Should().Be("An error occurred.");
@@ -305,7 +304,7 @@ public class ResultIntegrationTests
 
         // Act
         var sanitizedResult = Result.Failure<string, ErrorCategory>(
-            result.Error!.Sanitize(ResultError.SanitizationLevel.Full)
+            result.Error!.Sanitize(ResultErrorBase.SanitizationLevel.Full)
         );
 
         // Assert

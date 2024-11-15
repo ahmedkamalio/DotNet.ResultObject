@@ -5,15 +5,16 @@
         <Nullable>enable</Nullable>
 
         <!-- NuGet Package Metadata -->
+        <Title>.Net ResultObject</Title>
         <PackageId>ResultObject</PackageId>
-        <Version>1.1.0</Version>
+        <Version>1.1.1</Version>
         <Authors>Ahmed Kamal</Authors>
         <Description>A robust Result type for .NET with built-in error categorization, supporting type-safe success/failure scenarios without exceptions.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/ahmedkamalio/DotNet.ResultObject</RepositoryUrl>
         <PackageProjectUrl>https://github.com/ahmedkamalio/DotNet.ResultObject</PackageProjectUrl>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageTags>Utility, Result, ErrorHandling, DotNet</PackageTags>
+        <PackageTags>Utility, Result, ErrorHandling, DotNet, MonadPattern, RailwayOriented, TypeSafe, ExceptionFree, Validation, ErrorCategories, FunctionalProgramming, DomainDriven, CleanCode, CSharp, NetCore, Nullable</PackageTags>
 
         <!-- Optional NuGet Metadata -->
         <RepositoryType>git</RepositoryType>
