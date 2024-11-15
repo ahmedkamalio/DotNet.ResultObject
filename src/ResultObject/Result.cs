@@ -152,4 +152,4 @@ public class Result<TValue, TErrorCategory>(TValue? value, ResultError<TErrorCat
 /// </code>
 /// </example>
 public class Result<TValue>(TValue? value, ResultError<ErrorCategory>? error)
-    : Result<TValue, ErrorCategory>(value, error) where TValue : notnull;
+    : Result<TValue, ErrorCategory>(value, error), IResult<TValue> where TValue : notnull;
