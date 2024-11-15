@@ -81,9 +81,7 @@ jobs:
         run: |
           for package in artifacts/*.nupkg; do
             echo "Validating package: $package"
-            meziantou.validate-nuget-package "$package" \
-              --rules-preset=All \
-              --excluded-rules=NHL1001 # Exclude if you don't want to enforce license check
+            meziantou.validate-nuget-package "$package" --rules-preset=All
           done
 
       # Additional validation for multi-targeting
