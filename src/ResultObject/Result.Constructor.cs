@@ -124,7 +124,7 @@ public static class Result
     /// }
     /// </code>
     /// </example>
-    public static Result<TValue> Failure<TValue>(ResultError error)
+    public static Result<TValue> Failure<TValue>(ResultError<ErrorCategory> error)
         where TValue : notnull => new(default, error);
 
     /// <summary>

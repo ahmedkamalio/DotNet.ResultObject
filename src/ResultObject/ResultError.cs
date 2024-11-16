@@ -7,7 +7,7 @@ public abstract record ResultErrorBase(
     string Code,
     string Reason,
     string Message,
-    ResultError? InnerError,
+    ResultErrorBase? InnerError,
     string? StackTrace
 )
 {
@@ -104,7 +104,7 @@ public record ResultError<TErrorCategory>(
     string Reason,
     string Message,
     TErrorCategory? Category = null,
-    ResultError? InnerError = null,
+    ResultErrorBase? InnerError = null,
     string? StackTrace = null) : ResultErrorBase(Code, Reason, Message, InnerError, StackTrace)
     where TErrorCategory : struct, Enum
 {
@@ -188,7 +188,7 @@ public record ResultError(
     string Reason,
     string Message,
     ErrorCategory? Category = null,
-    ResultError? InnerError = null,
+    ResultErrorBase? InnerError = null,
     string? StackTrace = null)
     : ResultError<ErrorCategory>(Code, Reason, Message, Category, InnerError, StackTrace)
 {

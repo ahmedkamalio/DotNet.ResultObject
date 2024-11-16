@@ -7,7 +7,7 @@
         <!-- NuGet Package Metadata -->
         <Title>.Net ResultObject</Title>
         <PackageId>ResultObject</PackageId>
-        <Version>1.1.2</Version>
+        <Version>1.1.3</Version>
         <Authors>Ahmed Kamal</Authors>
         <Description>A robust Result type for .NET with built-in error categorization, supporting type-safe success/failure scenarios without exceptions.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
